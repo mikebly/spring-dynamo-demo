@@ -1,0 +1,69 @@
+service: spring-dynamo-demo
+
+custom:
+  environment: dev
+  tableName: claims
+  tableThroughput: 10
+
+provider:
+  name: aws
+  runtime: java8
+  stage: ${self:custom.environment}
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb: DescribeTable
+        - dynamodb: Query
+        - dynamodb: Scan
+        - dynamodb: GetItem
+        - dynamodb: PutItem
+        - dynamodb: UpdateItem
+        - dynamodb: DeleteItem
+      Resource:
+        - "Fn::GetAtt": [DynamoDbTable, Arn]
+
+resources:
+  Resources:
+    DynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+          - AttributeName: claimNumber
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+          - AttributeName: claimNumber
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: ${self:custom.tableThroughput}
+          WriteCapacityUnits: ${self:custom.tableThroughput}
+    DynamoDbIamPolicy:
+      Type: AWS::IAM::Policy
+      DependsOn: DynamoDbTable
+      Properties:
+        PolicyName: dynamo-lambda-policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb: GetItem
+                - dynamodb: PutItem
+              Resource: arn:aws:dynamodb:*:*:table/claims
+        Roles:
+          - Ref: IamRoleLambdaExecution
+
+functions:
+  dynamoDb:
+    handler: com.grm.ah.cerberus.springdynamodemo.controller.ClaimController
+    memorySize: 3008
+    name: dynamo-spring-demo-${self:custom.environment}
+    events:
+      - http:
+          path: /claims
+          method: ANY
