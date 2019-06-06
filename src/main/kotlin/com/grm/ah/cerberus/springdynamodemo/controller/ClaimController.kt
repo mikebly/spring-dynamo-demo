@@ -1,6 +1,7 @@
 package com.grm.ah.cerberus.springdynamodemo.controller
 
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBScanExpression
 import com.grm.ah.cerberus.springdynamodemo.entities.Claim
 import com.grm.ah.cerberus.springdynamodemo.repositories.ClaimRepository
 import org.slf4j.Logger

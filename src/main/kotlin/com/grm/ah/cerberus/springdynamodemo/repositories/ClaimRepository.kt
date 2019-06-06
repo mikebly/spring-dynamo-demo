@@ -6,7 +6,6 @@ import org.springframework.data.repository.CrudRepository
 
 @EnableScan
 interface ClaimRepository: CrudRepository<Claim,String>, CustomClaimRepository{
-//    fun findByClaimNumber(number: String):Claim
     fun findClaimByClaimNumber(number: String):List<Claim>
     fun deleteClaimByClaimNumber(number: String)
 
