@@ -65,5 +65,5 @@ functions:
     name: dynamo-spring-demo-${self:custom.environment}
     events:
       - http:
-          path: /claims
+          path: /test
           method: ANY
