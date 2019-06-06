@@ -2,33 +2,32 @@ service: spring-dynamo-demo
 
 custom:
   environment: dev
-  tableName: claims
+  tableName: test
   tableThroughput: 10
 
 provider:
   name: aws
   runtime: java8
-  stage: ${self:custom.environment}
+  environment:
+    tableName: ${self:custom.tableName}
   region: us-east-1
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb: DescribeTable
-        - dynamodb: Query
-        - dynamodb: Scan
-        - dynamodb: GetItem
-        - dynamodb: PutItem
-        - dynamodb: UpdateItem
-        - dynamodb: DeleteItem
-      Resource:
-        - "Fn::GetAtt": [DynamoDbTable, Arn]
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.tableName}"
 
 resources:
   Resources:
     DynamoDbTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain
       Properties:
-        TableName: ${self:custom.tableName}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
@@ -42,19 +41,20 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: ${self:custom.tableThroughput}
           WriteCapacityUnits: ${self:custom.tableThroughput}
-    DynamoDbIamPolicy:
+        TableName: ${self:provider.environment.tableName}
+    DynamoDBIamPolicy:
       Type: AWS::IAM::Policy
       DependsOn: DynamoDbTable
       Properties:
-        PolicyName: dynamo-lambda-policy
+        PolicyName: lambda-dynamodb
         PolicyDocument:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Action:
-                - dynamodb: GetItem
-                - dynamodb: PutItem
-              Resource: arn:aws:dynamodb:*:*:table/claims
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+              Resource: arn:aws:dynamodb:*:*:table/test
         Roles:
           - Ref: IamRoleLambdaExecution
 
